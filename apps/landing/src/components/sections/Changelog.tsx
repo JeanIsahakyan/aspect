@@ -5,6 +5,16 @@ import { BrandIcon } from '../ui/brand-icon'
 
 const releases = [
   {
+    version: '2.2.0',
+    date: '09/05/2026',
+    changes: [
+      { type: 'fix', date: '09/05/2026', text: 'React Native (iOS / WKWebView): dispatch a plain Event with data as an own property — the MessageEvent init dict was dropped, delivering an empty payload and hanging the handshake' },
+      { type: 'fix', date: '09/05/2026', text: 'core: handleInitResult marks the bridge available so the later-initializing side resolves — fixes handshake timeout when the peer’s Init was missed' },
+      { type: 'fix', date: '09/05/2026', text: 'React Native: escape injected payloads via JSON.stringify and end the injected script with true; to avoid a WKWebView crash' },
+      { type: 'feat', date: '09/05/2026', text: 'transports: webkit, android, and flutter native-host detection registered in the auto-detection registry' },
+    ],
+  },
+  {
     version: '2.1.0',
     date: '06/22/2026',
     changes: [
