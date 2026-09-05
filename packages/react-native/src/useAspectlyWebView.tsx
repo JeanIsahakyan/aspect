@@ -97,10 +97,26 @@ export const useAspectlyWebView = ({
   const bridge = useMemo(() => {
     return new BridgeInternal((event: object): void => {
       const bridgeEvent = BridgeCore.wrapBridgeEvent(event);
+      // Dispatch a plain Event with `data` assigned as an own property rather
+      // than `new MessageEvent('message', { data })`. On iOS WKWebView the init
+      // dictionary of MessageEvent is dropped in this injection path, so the
+      // listener fires with an empty `e.data` and the handshake never parses.
+      // `MessageEvent.prototype.data` is a read-only accessor, so we fall back to
+      // the MessageEvent form only if assigning `.data` on a plain Event throws.
+      // JSON.stringify emits a properly escaped JS string literal (quotes,
+      // backslashes and newlines in the payload can't break the script), and the
+      // trailing `true;` gives WKWebView a serializable result to avoid a crash.
       webViewRef.current?.injectJavaScript(
         `(function() {
-          window.dispatchEvent(new MessageEvent('message', {data: '${bridgeEvent}'}));
-        })()`
+          try {
+            var evt = new Event('message');
+            evt.data = ${JSON.stringify(bridgeEvent)};
+            window.dispatchEvent(evt);
+          } catch (e) {
+            window.dispatchEvent(new MessageEvent('message', {data: ${JSON.stringify(bridgeEvent)}}));
+          }
+        })();
+        true;`
       );
     }, { timeout });
   }, [timeout]);

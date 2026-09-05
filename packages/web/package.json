@@ -1,6 +1,6 @@
 {
   "name": "@aspectly/web",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Web/iframe integration for Aspectly bridge - React hooks for embedding and communicating with iframes",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

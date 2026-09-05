@@ -1,6 +1,6 @@
 {
   "name": "@aspectly/transports",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Transport layer for Aspectly bridge - platform detection and message passing",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

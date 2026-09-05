@@ -1,7 +1,7 @@
 {
   "name": "aspectly-landing",
   "private": true,
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Landing page for Aspectly - A type-safe communication bridge for React Native and Web",
   "type": "module",
   "scripts": {

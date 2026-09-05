@@ -1,6 +1,6 @@
 {
   "name": "@aspectly/react-native",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "React Native WebView integration for Aspectly bridge - communicate with web content in your React Native app",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

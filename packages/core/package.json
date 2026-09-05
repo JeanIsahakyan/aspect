@@ -1,6 +1,6 @@
 {
   "name": "@aspectly/core",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Core bridge framework for cross-platform communication between WebViews, iframes, and web applications",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
