@@ -1,6 +1,6 @@
 {
   "name": "@aspectly/react-native-web",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "React Native Web integration for Aspectly bridge - cross-platform support for web, iOS, and Android with iframes",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

@@ -97,10 +97,15 @@ export const useAspectlyWebView = ({
   const bridge = useMemo(() => {
     return new BridgeInternal((event: object): void => {
       const bridgeEvent = BridgeCore.wrapBridgeEvent(event);
+      // Use JSON.stringify to emit a properly escaped JS string literal so that
+      // quotes, backslashes and newlines in the payload can't break the script.
+      // The trailing `true;` is required: on iOS WKWebView serializes the result
+      // of the injected script, and an IIFE returning `undefined` crashes there.
       webViewRef.current?.injectJavaScript(
         `(function() {
-          window.dispatchEvent(new MessageEvent('message', {data: '${bridgeEvent}'}));
-        })()`
+          window.dispatchEvent(new MessageEvent('message', {data: ${JSON.stringify(bridgeEvent)}}));
+        })();
+        true;`
       );
     }, { timeout });
   }, [timeout]);

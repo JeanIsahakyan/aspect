@@ -1,7 +1,7 @@
 {
   "name": "aspectly-landing",
   "private": true,
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Landing page for Aspectly - A type-safe communication bridge for React Native and Web",
   "type": "module",
   "scripts": {
@@ -14,7 +14,7 @@
     "@aspectly/core": "workspace:*",
     "@aspectly/web": "workspace:*",
     "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
+    "clsx": "^2.2.0",
     "framer-motion": "^12.23.25",
     "lucide-react": "^0.555.0",
     "react": "^19.2.0",

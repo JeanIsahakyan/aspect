@@ -28,10 +28,27 @@ vi.mock('@aspectly/core', () => ({
   })),
 }));
 
-// Mock react-native-webview
-vi.mock('react-native-webview', () => ({
-  WebView: vi.fn().mockReturnValue(null),
+// Mock react-native-webview as a class component so that `ref` resolves to an
+// instance exposing injectJavaScript (React only forwards refs to class /
+// forwardRef components, not plain function components).
+const { injectJavaScript, webViewProps } = vi.hoisted(() => ({
+  injectJavaScript: vi.fn(),
+  webViewProps: vi.fn(),
 }));
+vi.mock('react-native-webview', async () => {
+  const ReactModule = await import('react');
+  class WebView extends ReactModule.Component {
+    injectJavaScript = injectJavaScript;
+    constructor(props: unknown) {
+      super(props as never);
+      webViewProps(props);
+    }
+    render() {
+      return null;
+    }
+  }
+  return { WebView };
+});
 
 describe('useAspectlyWebView (react-native)', () => {
   beforeEach(() => {
@@ -99,6 +116,53 @@ describe('useAspectlyWebView (react-native)', () => {
     });
   });
 
+  describe('event injection', () => {
+    it('should inject a script that ends with `true;` to avoid iOS WKWebView crashes', async () => {
+      const { BridgeInternal } = await import('@aspectly/core');
+      const { result } = renderHook(() =>
+        useAspectlyWebView({ url: 'https://example.com' })
+      );
+
+      const [, , WebViewComponent] = result.current;
+      render(<WebViewComponent />);
+
+      // The bridge event sender is the first arg passed to BridgeInternal.
+      const sendEvent = (BridgeInternal as unknown as { mock: { calls: unknown[][] } })
+        .mock.calls[0][0] as (event: object) => void;
+      sendEvent({ type: 'Init', data: { methods: ['a'] } });
+
+      expect(injectJavaScript).toHaveBeenCalledTimes(1);
+      const script = injectJavaScript.mock.calls[0][0] as string;
+      expect(script.trimEnd().endsWith('true;')).toBe(true);
+    });
+
+    it('should safely escape payloads containing quotes and newlines', async () => {
+      const { BridgeInternal } = await import('@aspectly/core');
+      const { result } = renderHook(() =>
+        useAspectlyWebView({ url: 'https://example.com' })
+      );
+
+      const [, , WebViewComponent] = result.current;
+      render(<WebViewComponent />);
+
+      const sendEvent = (BridgeInternal as unknown as { mock: { calls: unknown[][] } })
+        .mock.calls[0][0] as (event: object) => void;
+      const payload = { type: 'Result', data: { text: `it's a "test"\nnewline` } };
+      sendEvent(payload);
+
+      const script = injectJavaScript.mock.calls[0][0] as string;
+      // The injected script must be syntactically valid: extract the string
+      // literal handed to MessageEvent and confirm it round-trips to the payload.
+      const match = script.match(/\{data: (.*)\}\)\);/s);
+      expect(match).not.toBeNull();
+      const injectedLiteral = match![1];
+      // Inner value is the JSON produced by wrapBridgeEvent; outer JSON.parse
+      // undoes the escaping applied for the JS string literal.
+      const innerJson = JSON.parse(injectedLiteral) as string;
+      expect(JSON.parse(innerJson)).toEqual({ type: 'BridgeEvent', event: payload });
+    });
+  });
+
   describe('WebViewComponent', () => {
     it('should be a valid React component', () => {
       const { result } = renderHook(() =>
@@ -157,15 +221,11 @@ describe('useAspectlyWebView (react-native)', () => {
       // Render the component
       render(<WebViewComponent />);
 
-      // Get the mock from the module
-      const { WebView } = await import('react-native-webview');
-
-      // Verify WebView was called with correct source
-      expect(WebView).toHaveBeenCalledWith(
+      // Verify WebView was constructed with the correct source
+      expect(webViewProps).toHaveBeenCalledWith(
         expect.objectContaining({
           source: { uri: 'https://example.com/app' }
-        }),
-        expect.anything()
+        })
       );
     });
 
@@ -178,13 +238,10 @@ describe('useAspectlyWebView (react-native)', () => {
 
       render(<WebViewComponent />);
 
-      const { WebView } = await import('react-native-webview');
-
-      expect(WebView).toHaveBeenCalledWith(
+      expect(webViewProps).toHaveBeenCalledWith(
         expect.objectContaining({
           javaScriptEnabled: true
-        }),
-        expect.anything()
+        })
       );
     });
 
@@ -197,13 +254,10 @@ describe('useAspectlyWebView (react-native)', () => {
 
       render(<WebViewComponent />);
 
-      const { WebView } = await import('react-native-webview');
-
-      expect(WebView).toHaveBeenCalledWith(
+      expect(webViewProps).toHaveBeenCalledWith(
         expect.objectContaining({
           mixedContentMode: 'always'
-        }),
-        expect.anything()
+        })
       );
     });
   });
