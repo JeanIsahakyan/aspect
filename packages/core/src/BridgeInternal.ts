@@ -284,6 +284,15 @@ export class BridgeInternal {
 
   private handleInitResult = (success: BridgeInitResultEvent): void => {
     if (success) {
+      // Receiving an InitResult means the other side acknowledged our Init, so
+      // it is alive and ready — mark it available here too. Without this, a side
+      // that missed the peer's Init (e.g. the host broadcast it before the
+      // mini-app subscribed) would only ever see the InitResult, leaving
+      // `available` false and its init() promise unresolved until timeout.
+      // Note: InitResult carries no method list, so `supports()` may be
+      // incomplete for a side that only received an InitResult; `send()` gates
+      // on isAvailable() only, so calls still work.
+      this.available = true;
       this.initResultReceived = true;
       this.tryResolveInit();
     } else {

@@ -79,6 +79,25 @@ describe('BridgeInternal', () => {
 
       await expect(initPromise).resolves.toBe(true);
     });
+
+    it('should resolve init when only InitResult is received (peer Init missed)', async () => {
+      // Race: the peer broadcast its Init before we subscribed, so we never
+      // receive its Init — only the InitResult acknowledging our own Init.
+      // The handshake must still complete and the bridge become available.
+      const handlers = {
+        greet: async () => ({ message: 'hello' }),
+      };
+
+      const initPromise = bridge.init(handlers);
+
+      bridge.handleCoreEvent({
+        type: BridgeEventType.InitResult,
+        data: true,
+      });
+
+      await expect(initPromise).resolves.toBe(true);
+      expect(bridge.isAvailable()).toBe(true);
+    });
   });
 
   describe('handleCoreEvent', () => {

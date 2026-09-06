@@ -136,7 +136,11 @@ describe('useAspectlyWebView (react-native)', () => {
       expect(script.trimEnd().endsWith('true;')).toBe(true);
     });
 
-    it('should safely escape payloads containing quotes and newlines', async () => {
+    it('should deliver the payload as a string `e.data` when the injected script runs', async () => {
+      // Regression for the iOS WKWebView bug where `new MessageEvent('message',
+      // { data })` fires the listener with an empty `e.data`. Executing the
+      // injected script must dispatch a 'message' event whose `data` is the
+      // serialized payload, and it must survive quotes/backslashes/newlines.
       const { BridgeInternal } = await import('@aspectly/core');
       const { result } = renderHook(() =>
         useAspectlyWebView({ url: 'https://example.com' })
@@ -147,19 +151,25 @@ describe('useAspectlyWebView (react-native)', () => {
 
       const sendEvent = (BridgeInternal as unknown as { mock: { calls: unknown[][] } })
         .mock.calls[0][0] as (event: object) => void;
-      const payload = { type: 'Result', data: { text: `it's a "test"\nnewline` } };
+      const payload = { type: 'Result', data: { text: `it's a "test"\nnew\\line` } };
       sendEvent(payload);
 
       const script = injectJavaScript.mock.calls[0][0] as string;
-      // The injected script must be syntactically valid: extract the string
-      // literal handed to MessageEvent and confirm it round-trips to the payload.
-      const match = script.match(/\{data: (.*)\}\)\);/s);
-      expect(match).not.toBeNull();
-      const injectedLiteral = match![1];
-      // Inner value is the JSON produced by wrapBridgeEvent; outer JSON.parse
-      // undoes the escaping applied for the JS string literal.
-      const innerJson = JSON.parse(injectedLiteral) as string;
-      expect(JSON.parse(innerJson)).toEqual({ type: 'BridgeEvent', event: payload });
+      let received: unknown;
+      const handler = (e: MessageEvent): void => {
+        received = e.data;
+      };
+      window.addEventListener('message', handler);
+      // Execute the exact script the host injects into the WebView.
+      // eslint-disable-next-line no-eval
+      eval(script);
+      window.removeEventListener('message', handler);
+
+      expect(typeof received).toBe('string');
+      expect(JSON.parse(received as string)).toEqual({
+        type: 'BridgeEvent',
+        event: payload,
+      });
     });
   });
 
