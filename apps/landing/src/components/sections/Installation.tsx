@@ -70,7 +70,7 @@ await bridge.InitializeAsync();`,
     label: 'iOS / macOS / visionOS',
     icon: 'swift',
     registry: 'SwiftPM · CocoaPods',
-    install: ['.package(url: "https://github.com/JeanIsahakyan/aspectly.git", from: "2.1.0")', "pod 'AspectlyBridgeWebKit'"],
+    install: ['.package(url: "https://github.com/JeanIsahakyan/aspectly.git", from: "2.2.0")', "pod 'AspectlyBridgeWebKit'"],
     packages: ['AspectlyBridge', 'AspectlyBridgeWebKit'],
     example: {
       filename: 'ContentView.swift',
@@ -104,7 +104,7 @@ struct ContentView: View {
     label: 'Android',
     icon: 'android',
     registry: 'Maven Central',
-    install: ['implementation("io.github.jeanisahakyan:aspectly-bridge-webview:2.1.0")'],
+    install: ['implementation("io.github.jeanisahakyan:aspectly-bridge-webview:2.2.0")'],
     packages: ['io.github.jeanisahakyan:aspectly-bridge', 'io.github.jeanisahakyan:aspectly-bridge-webview'],
     example: {
       filename: 'MainActivity.kt',
